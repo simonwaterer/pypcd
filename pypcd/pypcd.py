@@ -281,15 +281,18 @@ def point_cloud_from_fileobj(f):
     """ Parse pointcloud coming from file object f
     """
     header = []
-    while True:
-        ln = f.readline().strip()
-        if not isinstance(ln, str):
-            ln = ln.decode('utf-8')
-        header.append(ln)
-        if ln.startswith('DATA'):
-            metadata = parse_header(header)
-            dtype = _build_dtype(metadata)
-            break
+    try:
+        while True:
+            ln = next(f) # .readline().strip()
+            if not isinstance(ln, str):
+                ln = ln.decode('utf-8')
+            header.append(ln)
+            if ln.startswith('DATA'):
+                metadata = parse_header(header)
+                dtype = _build_dtype(metadata)
+                break
+    except StopIteration:
+        raise ValueError("Could not parse header")
     if metadata['data'] == 'ascii':
         pc_data = parse_ascii_pc_data(f, dtype, metadata)
     elif metadata['data'] == 'binary':
