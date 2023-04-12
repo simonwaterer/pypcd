@@ -14,7 +14,12 @@ import struct
 import copy
 import numpy as np
 import warnings
-import lzf
+
+HAS_LZF = True
+try:
+    import lzf
+except ImportError:
+    HAS_LZF = False
 
 try:
     from StringIO import StringIO, BytesIO
@@ -255,6 +260,8 @@ def parse_binary_compressed_pc_data(f, dtype, metadata):
     - compressed data
     - junk
     """
+    if not HAS_LZF:
+        raise Exception('binary_compressed format not supported unless python-lzf package is installed')
     fmt = 'II'
     compressed_size, uncompressed_size =\
         struct.unpack(fmt, f.read(struct.calcsize(fmt)))
@@ -348,6 +355,8 @@ def point_cloud_to_fileobj(pc, fileobj, data_compression=None):
     elif metadata['data'].lower() == 'binary':
         fileobj.write(pc.pc_data.tostring())
     elif metadata['data'].lower() == 'binary_compressed':
+        if not HAS_LZF:
+            raise Exception('binary_compressed format not supported unless python-lzf package is installed')
         # TODO
         # a '_' field is ignored by pcl and breaks compressed point clouds.
         # changing '_' to '_padding' or other name fixes this.
